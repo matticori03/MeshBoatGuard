@@ -1,7 +1,7 @@
 # MeshBoatGuard – IoT Boat Security System via Meshtastic
 
 **Authors:** Mattia Coriale (5640317), Gabriele Alessandria (5622102), Federico Rissolio (5241314)  
-**Course:** IoT Project  
+**Course:** Internet of Things (IoT) 
 
 ---
 
