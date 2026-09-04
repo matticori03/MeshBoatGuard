@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    uid: influxdb_meshboatguard
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: meshboatguard
+      defaultBucket: telemetry
+      httpHeaderName1: Authorization
+    secureJsonData:
+      httpHeaderValue1: Token meshboatguard_secret_token_12345
+    isDefault: true

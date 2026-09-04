@@ -1,0 +1,47 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Arduino IDE / Build output
+build/
+*.elf
+*.bin
+*.hex
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# VSCode / IDE config
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.log
+
+# Config per-dispositivo (nome del device seriale, token)
+.env
+
+# Volumi runtime dei container: stato locale del singolo dispositivo
+server/influxdb/
+server/grafana/data/
+server/mosquitto/data/
+server/mosquitto/log/
+# Password file Mosquitto (hash utente/password, va generato in locale)
+server/mosquitto/config/passwd
+
+# Node-RED: ignora lo stato runtime (incluso flows_cred.json con i token
+# Telegram) ma versiona i flussi. Serve "data/*" e non "data/": git non
+# re-include un file se la cartella padre e' esclusa.
+server/nodered/data/*
+!server/nodered/data/flows.json
+.venv/
