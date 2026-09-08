@@ -1,0 +1,489 @@
+[
+    {
+        "id": "tab_meshboatguard",
+        "type": "tab",
+        "label": "MeshBoatGuard Security Stack",
+        "disabled": false,
+        "info": "Main Node-RED flow for MeshBoatGuard Ground Station:\n- JSON packet ingestion via MQTT (self-hosted Mosquitto)\n- Telegram push notifications on Alarm\n- Telegram remote commands (/arm, /disarm, /status) via MQTT downlink\n- Time-series and event writing to InfluxDB v2"
+    },
+    {
+        "id": "comment_ingest",
+        "type": "comment",
+        "z": "tab_meshboatguard",
+        "name": "1. RECEIVE DATA FROM MESHTASTIC GATEWAY",
+        "info": "",
+        "x": 210,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "node_mqtt_in",
+        "type": "mqtt in",
+        "z": "tab_meshboatguard",
+        "name": "Meshtastic Gateway MQTT (uplink)",
+        "topic": "msh/+/2/json/+/+",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_mosquitto",
+        "x": 180,
+        "y": 120,
+        "wires": [
+            [
+                "node_unwrap_meshtastic_json",
+                "node_debug_raw_mqtt_in"
+            ]
+        ]
+    },
+    {
+        "id": "node_unwrap_meshtastic_json",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Extract JSON from Meshtastic Envelope",
+        "func": "let env = msg.payload;\nif (!env || env.type !== \"text\" || env.payload === undefined) return null;\n\nlet raw = env.payload;\n// Meshtastic publishes the payload already decoded as an object when the radio message text is valid JSON (our case); for simple text it arrives as a string inside payload.text.\nif (raw !== null && typeof raw === \"object\") {\n    raw = (typeof raw.text === \"string\") ? raw.text : JSON.stringify(raw);\n}\n\nif (typeof raw !== \"string\") return null;\n\nmsg.payload = raw;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 120,
+        "wires": [
+            [
+                "node_json_parse"
+            ]
+        ]
+    },
+    {
+        "id": "node_inject_test_alm",
+        "type": "inject",
+        "z": "tab_meshboatguard",
+        "name": "Simulate BOW ALARM",
+        "props": [
+            {
+                "p": "payload",
+                "v": "{\"t\":\"ALM\",\"dev\":\"BoatGuard_01\",\"s\":\"ARM\",\"src\":\"PRUA\",\"tmp\":24.5,\"hum\":58,\"bat\":98}",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 170,
+        "y": 180,
+        "wires": [
+            [
+                "node_json_parse"
+            ]
+        ]
+    },
+    {
+        "id": "node_inject_test_tel",
+        "type": "inject",
+        "z": "tab_meshboatguard",
+        "name": "Simulate TELEMETRY",
+        "props": [
+            {
+                "p": "payload",
+                "v": "{\"t\":\"TEL\",\"dev\":\"BoatGuard_01\",\"s\":\"ARM\",\"src\":\"TIMER\",\"tmp\":23.2,\"hum\":62,\"bat\":97}",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 160,
+        "y": 240,
+        "wires": [
+            [
+                "node_json_parse"
+            ]
+        ]
+    },
+    {
+        "id": "node_json_parse",
+        "type": "json",
+        "z": "tab_meshboatguard",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 410,
+        "y": 180,
+        "wires": [
+            [
+                "node_switch_type",
+                "node_format_influx"
+            ]
+        ]
+    },
+    {
+        "id": "node_switch_type",
+        "type": "switch",
+        "z": "tab_meshboatguard",
+        "name": "Filter Message Type (t)",
+        "property": "payload.t",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "ALM",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "TEL",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "ACK",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "CFG",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 4,
+        "x": 630,
+        "y": 180,
+        "wires": [
+            [
+                "node_format_telegram_alarm"
+            ],
+            [
+                "node_debug_telemetry",
+                "node_format_telegram_tel"
+            ],
+            [
+                "node_format_telegram_ack"
+            ],
+            [
+                "node_debug_cfg"
+            ]
+        ]
+    },
+    {
+        "id": "comment_telegram",
+        "type": "comment",
+        "z": "tab_meshboatguard",
+        "name": "2. TELEGRAM BOT INTEGRATION (NOTIFICATIONS & COMMANDS)",
+        "info": "",
+        "x": 230,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "node_format_telegram_alarm",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Format Alarm Notification",
+        "func": "let p = msg.payload;\nlet now = new Date().toLocaleString('en-US', { timeZone: 'Europe/Rome' });\n\nlet icon = \"🚨\";\nif (p.src === \"PRUA\") icon = \"⚓ 🚨\";\nif (p.src === \"CABINA\") icon = \"🚪 🚨\";\nif (p.src === \"PIR\") icon = \"🚶 🚨\";\n\nlet text = `${icon} *MESHBOATGUARD INTRUSION ALARM* ${icon}\\n\\n`;\ntext += `📌 *Device:* \\`${p.dev}\\`\\n`;\ntext += `📍 *Triggered Zone:* \\`${p.src}\\`\\n`;\ntext += `🛡️ *System State:* \\`${p.s === \"ARM\" ? \"ARMED\" : \"DISARMED\"}\\`\\n`;\ntext += `🌡️ *Temperature:* ${p.tmp} °C | 💧 *Humidity:* ${p.hum}%\\n`;\ntext += `🔋 *Boat Battery:* ${p.bat}%\\n`;\ntext += `⏱️ *Event Time:* ${now}`;\n\nmsg.payload = {\n    chatId: msg.chatId || env.get(\"TELEGRAM_DEFAULT_CHAT_ID\"),\n    type: \"message\",\n    content: text,\n    options: { parse_mode: \"Markdown\" }\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 910,
+        "y": 140,
+        "wires": [
+            [
+                "node_telegram_sender"
+            ]
+        ]
+    },
+    {
+        "id": "node_format_telegram_tel",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Format Telemetry Notification",
+        "func": "let p = msg.payload;\nlet now = new Date().toLocaleString('en-US', { timeZone: 'Europe/Rome' });\n\nlet text = `📊 *MESHBOATGUARD TELEMETRY*\\n\\n`;\ntext += `📌 *Device:* \\`${p.dev}\\`\\n`;\ntext += `🛡️ *System State:* \\`${p.s === \"ARM\" ? \"ARMED\" : \"DISARMED\"}\\`\\n`;\ntext += `🌡️ *Temperature:* ${p.tmp} °C | 💧 *Humidity:* ${p.hum}%\\n`;\ntext += `🔋 *Boat Battery:* ${p.bat}%\\n`;\ntext += `⏱️ *Updated:* ${now}`;\n\nmsg.payload = {\n    chatId: msg.chatId || env.get(\"TELEGRAM_DEFAULT_CHAT_ID\"),\n    type: \"message\",\n    content: text,\n    options: { parse_mode: \"Markdown\" }\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 910,
+        "y": 180,
+        "wires": [
+            [
+                "node_telegram_sender"
+            ]
+        ]
+    },
+    {
+        "id": "node_format_telegram_ack",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Format ACK Notification",
+        "func": "let p = msg.payload;\nlet statusStr = p.s === \"ARM\" ? \"🔒 ARMED\" : \"🔓 DISARMED\";\nlet text = `✅ *MESHBOATGUARD COMMAND CONFIRMATION*\\n\\nSystem state updated: *${statusStr}*`;\n\nmsg.payload = {\n    chatId: msg.chatId || env.get(\"TELEGRAM_DEFAULT_CHAT_ID\"),\n    type: \"message\",\n    content: text,\n    options: { parse_mode: \"Markdown\" }\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 900,
+        "y": 220,
+        "wires": [
+            [
+                "node_telegram_sender"
+            ]
+        ]
+    },
+    {
+        "id": "node_telegram_receiver",
+        "type": "telegram receiver",
+        "z": "tab_meshboatguard",
+        "name": "Telegram Bot Commands",
+        "bot": "telegram_bot_config",
+        "saveState": false,
+        "x": 170,
+        "y": 380,
+        "wires": [
+            [
+                "node_telegram_command_router"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "node_telegram_command_router",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Route Telegram Commands",
+        "func": "let text = msg.payload.content || \"\";\nlet chatId = msg.payload.chatId;\n\nlet responseMsg = \"\";\nlet cmdPayload = \"\";\n\nif (text.startsWith(\"/arm\")) {\n    cmdPayload = '{\"cmd\":\"ARM\",\"val\":1}';\n    responseMsg = \"🔒 *Arm command sent to the boat via Meshtastic...*\";\n} else if (text.startsWith(\"/disarm\")) {\n    cmdPayload = '{\"cmd\":\"ARM\",\"val\":0}';\n    responseMsg = \"🔓 *Disarm command sent to the boat via Meshtastic...*\";\n} else if (text.startsWith(\"/status\")) {\n    cmdPayload = '{\"cmd\":\"STAT\"}';\n    responseMsg = \"ℹ️ *Status and telemetry request sent via Meshtastic...*\";\n} else {\n    responseMsg = \"⚓ *MeshBoatGuard Bot Commands:*\\n\\n/arm - Arm the onboard security system\\n/disarm - Disarm the onboard security system\\n/status - Request updated state, weather and battery data\";\n}\n\nlet outputs = [null, null];\n\nif (responseMsg) {\n    outputs[0] = {\n        payload: {\n            chatId: chatId,\n            type: \"message\",\n            content: responseMsg,\n            options: { parse_mode: \"Markdown\" }\n        }\n    };\n}\n\nif (cmdPayload) {\n    outputs[1] = { payload: cmdPayload };\n}\n\nreturn outputs;",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 440,
+        "y": 380,
+        "wires": [
+            [
+                "node_telegram_sender"
+            ],
+            [
+                "node_format_mqtt_downlink"
+            ]
+        ]
+    },
+    {
+        "id": "node_telegram_sender",
+        "type": "telegram sender",
+        "z": "tab_meshboatguard",
+        "name": "Send Telegram",
+        "bot": "telegram_bot_config",
+        "haserroroutput": false,
+        "x": 910,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "node_format_mqtt_downlink",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Wrap Command in Meshtastic JSON Downlink",
+        "func": "let downlinkTopic = env.get(\"MESHTASTIC_MQTT_DOWNLINK_TOPIC\");\nif (!downlinkTopic) {\n    node.warn(\"MESHTASTIC_MQTT_DOWNLINK_TOPIC not set in .env: command not sent\");\n    return null;\n}\n// Meshtastic firmware requires 'from' to match the gateway nodeNum receiving the downlink: we parse it from the hex ID in the topic.\nlet hexId = downlinkTopic.split(\"!\").pop();\nlet fromNum = parseInt(hexId, 16);\nmsg.topic = downlinkTopic;\nmsg.payload = JSON.stringify({\n    from: fromNum,\n    type: \"sendtext\",\n    channel: 0, // channel index for 'meshboat' (the 'mqtt' channel acts just as a gate to downlink)\n    payload: msg.payload // simple string, not an object\n});\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 440,
+        "wires": [
+            [
+                "node_mqtt_out"
+            ]
+        ]
+    },
+    {
+        "id": "node_mqtt_out",
+        "type": "mqtt out",
+        "z": "tab_meshboatguard",
+        "name": "Send Command to MQTT Gateway (downlink)",
+        "topic": "",
+        "qos": "0",
+        "retain": "false",
+        "broker": "mqtt_broker_mosquitto",
+        "x": 1240,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "comment_influx",
+        "type": "comment",
+        "z": "tab_meshboatguard",
+        "name": "3. STORE IN INFLUXDB DATABASE",
+        "info": "",
+        "x": 210,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "node_format_influx",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Format InfluxDB Line Protocol",
+        "func": "let p = msg.payload;\nif (!p || !p.dev) return null;\n\nlet measurement = \"meshboatguard_telemetry\";\nlet line = `${measurement},device=${p.dev},source=${p.src||'UNK'},msg_type=${p.t||'TEL'} `;\n\nlet fields = [];\nif (p.tmp !== undefined) fields.push(`temperature=${parseFloat(p.tmp)}`);\nif (p.hum !== undefined) fields.push(`humidity=${parseFloat(p.hum)}`);\nif (p.bat !== undefined) fields.push(`battery=${parseInt(p.bat)}`);\nif (p.s !== undefined) fields.push(`armed=${p.s === 'ARM' ? 1 : 0}`);\nfields.push(`alarm_active=${p.t === 'ALM' ? 1 : 0}`);\n\nline += fields.join(\",\");\n\nmsg.payload = line;\nmsg.headers = {\n    \"Authorization\": \"Token meshboatguard_secret_token_12345\",\n    \"Content-Type\": \"text/plain; charset=utf-8\"\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 450,
+        "y": 560,
+        "wires": [
+            [
+                "node_http_influx_write"
+            ]
+        ]
+    },
+    {
+        "id": "node_http_influx_write",
+        "type": "http request",
+        "z": "tab_meshboatguard",
+        "name": "HTTP Write to InfluxDB v2",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://influxdb:8086/api/v2/write?org=meshboatguard&bucket=telemetry&precision=s",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 770,
+        "y": 560,
+        "wires": [
+            [
+                "node_debug_influx_res"
+            ]
+        ]
+    },
+    {
+        "id": "node_debug_telemetry",
+        "type": "debug",
+        "z": "tab_meshboatguard",
+        "name": "Telemetry Log",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 880,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "node_debug_cfg",
+        "type": "debug",
+        "z": "tab_meshboatguard",
+        "name": "Config Log",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "node_debug_influx_res",
+        "type": "debug",
+        "z": "tab_meshboatguard",
+        "name": "InfluxDB Write Status",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "statusCode",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1020,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "mqtt_broker_mosquitto",
+        "type": "mqtt-broker",
+        "name": "Mosquitto (self-hosted, internal)",
+        "broker": "mosquitto",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true
+    },
+    {
+        "id": "telegram_bot_config",
+        "type": "telegram bot",
+        "botname": "MeshBoatGuardBot",
+        "usernames": "",
+        "pollInterval": "300"
+    },
+    {
+        "id": "node_inject_test_downlink",
+        "type": "inject",
+        "z": "tab_meshboatguard",
+        "name": "🔘 Test Send (MQTT downlink)",
+        "props": [
+            {
+                "p": "payload",
+                "v": "test invio",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 700,
+        "y": 500,
+        "wires": [
+            [
+                "node_format_mqtt_downlink"
+            ]
+        ]
+    },
+    {
+        "id": "node_debug_raw_mqtt_in",
+        "type": "debug",
+        "z": "tab_meshboatguard",
+        "name": "Raw MQTT Input Log",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 190,
+        "y": 60,
+        "wires": []
+    }
+]
