@@ -94,7 +94,7 @@
         "type": "function",
         "z": "tab_meshboatguard",
         "name": "Extract JSON from Meshtastic Envelope",
-        "func": "let env = msg.payload;\nif (!env || env.type !== \"text\" || env.payload === undefined) return null;\n\nlet raw = env.payload;\n// Meshtastic publishes the payload already decoded as an object when the radio message text is valid JSON (our case); for simple text it arrives as a string inside payload.text.\nif (raw !== null && typeof raw === \"object\") {\n    raw = (typeof raw.text === \"string\") ? raw.text : JSON.stringify(raw);\n}\n\nif (typeof raw !== \"string\") return null;\n\nmsg.payload = raw;\nreturn msg;",
+        "func": "let packet = msg.payload;\nif (!packet || packet.type !== \"text\" || packet.payload === undefined) return null;\n\nlet raw = packet.payload;\n// Meshtastic publishes the payload already decoded as an object when the radio message text is valid JSON (our case); for simple text it arrives as a string inside payload.text.\nif (raw !== null && typeof raw === \"object\") {\n    raw = (typeof raw.text === \"string\") ? raw.text : JSON.stringify(raw);\n}\n\nif (typeof raw !== \"string\") return null;\n\nmsg.payload = raw;\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",

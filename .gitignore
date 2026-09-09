@@ -36,6 +36,7 @@ server/influxdb/
 server/grafana/data/
 server/mosquitto/data/
 server/mosquitto/log/
+
 # Password file Mosquitto (hash utente/password, va generato in locale)
 server/mosquitto/config/passwd
 
