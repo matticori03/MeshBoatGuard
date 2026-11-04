@@ -1,0 +1,1130 @@
+/* ==========================================================================
+   MeshBoat DASHBOARD – Responsive Stylesheet (Mobile, Desktop, Smart TV)
+   ========================================================================== */
+
+:root {
+    --bg-gradient-start: #e8eff3;
+    --bg-gradient-end: #f4f8fa;
+    --card-bg: #ffffff;
+    --navy-primary: #0b2e46;
+    --navy-secondary: #4a6578;
+    --navy-muted: #7b93a4;
+
+    --green-safe: #3fb950;
+    --green-glow: rgba(63, 185, 80, 0.34);
+    --green-pill-bg: #def7e5;
+    --green-pill-text: #1b7f37;
+
+    --red-alarm: #e53935;
+    --red-glow: rgba(229, 57, 53, 0.42);
+    --red-pill-bg: #fde8e8;
+    --red-pill-text: #c62828;
+
+    --orange-warn: #f59f00;
+    --orange-glow: rgba(245, 159, 0, 0.36);
+
+    --blue-lora: #2b98f0;
+    --blue-glow: rgba(43, 152, 240, 0.36);
+    --blue-disarmed: #3b82f6;
+
+    --shadow-card: 0 12px 32px rgba(11, 46, 70, 0.06), 0 2px 6px rgba(11, 46, 70, 0.04);
+    --radius-card: 22px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    min-height: 100%;
+    background: linear-gradient(145deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    color: var(--navy-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* Google Material Symbols configuration */
+.material-symbols-rounded {
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.dashboard-wrapper {
+    width: 100%;
+    max-width: 1560px;
+    margin: 0 auto;
+    padding: clamp(14px, 2.2vw, 34px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(16px, 2vw, 26px);
+}
+
+/* ==========================================================================
+   HEADER (MeshBoat DASHBOARD + Debug + IT/EN + Università di Genova)
+   ========================================================================== */
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 2px 4px;
+}
+
+.brand-title {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    line-height: 1;
+}
+
+.brand-main {
+    font-size: clamp(2rem, 3.8vw, 3.6rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--navy-primary);
+}
+
+.brand-sub {
+    font-size: clamp(1.1rem, 2vw, 1.9rem);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: var(--navy-secondary);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 1.5vw, 20px);
+    flex-wrap: wrap;
+}
+
+/* Pulsante Debug Toggle */
+.icon-pill-btn {
+    appearance: none;
+    border: 1px solid rgba(11, 46, 70, 0.14);
+    background: rgba(255, 255, 255, 0.75);
+    color: var(--navy-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+}
+
+.icon-pill-btn .material-symbols-rounded {
+    font-size: 18px;
+}
+
+.icon-pill-btn:hover,
+.icon-pill-btn.active {
+    background: var(--navy-primary);
+    color: #ffffff;
+    border-color: var(--navy-primary);
+}
+
+/* Selettore Lingua IT / EN */
+.lang-switch {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(11, 46, 70, 0.14);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.lang-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--navy-secondary);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.lang-btn.active {
+    background: var(--navy-primary);
+    color: #ffffff;
+}
+
+/* Logo Università di Genova */
+.unige-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.unige-crest {
+    width: clamp(32px, 3vw, 44px);
+    height: auto;
+    flex-shrink: 0;
+}
+
+.unige-text {
+    display: flex;
+    flex-direction: column;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    font-size: clamp(0.95rem, 1.35vw, 1.35rem);
+    line-height: 1.08;
+    color: var(--navy-primary);
+}
+
+/* ==========================================================================
+   CARD DEBUG (Nascosta di default, apribile con il toggle)
+   ========================================================================== */
+.debug-card {
+    background: #102536;
+    color: #e2eef7;
+    padding: 18px 22px;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.debug-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.debug-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #7cc4fa;
+}
+
+.debug-icon {
+    font-size: 20px;
+}
+
+.debug-timestamp {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.8rem;
+    color: #9fb8cc;
+}
+
+.debug-json {
+    background: #091722;
+    color: #6ee7b7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.86rem;
+    padding: 12px 16px;
+    border-radius: 12px;
+    overflow-x: auto;
+    border: 1px solid rgba(124, 196, 250, 0.18);
+    line-height: 1.45;
+}
+
+/* ==========================================================================
+   MAIN GRID (2 Colonne come nel Mockup)
+   ========================================================================== */
+.main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2.05fr) minmax(320px, 1fr);
+    gap: clamp(16px, 2vw, 26px);
+    align-items: stretch;
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: clamp(18px, 2vw, 28px);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    border: 2px solid transparent;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.card-title {
+    font-size: clamp(1rem, 1.25vw, 1.25rem);
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    color: var(--navy-primary);
+    text-transform: uppercase;
+}
+
+/* ==========================================================================
+   LEFT CARD: PIANTINA IMBARCAZIONE PULITA
+   ========================================================================== */
+.boat-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.boat-stage-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 0;
+}
+
+.boat-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1100 / 540;
+    max-height: 520px;
+}
+
+.boat-blueprint {
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
+}
+
+.zone-highlight {
+    transition: fill 0.35s ease;
+}
+
+.zone-highlight.active-alarm {
+    animation: zoneFlash 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes zoneFlash {
+    0% { fill: rgba(229, 57, 53, 0.06); }
+    100% { fill: rgba(229, 57, 53, 0.26); }
+}
+
+/* MARKER SENSORI */
+.sensor-marker {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    z-index: 5;
+    transition: transform 0.2s ease;
+}
+
+.sensor-marker:hover {
+    transform: translate(-50%, -50%) scale(1.06);
+    z-index: 10;
+}
+
+.marker-reed1 {
+    left: 25.5%;
+    top: 25%;
+    flex-direction: column;
+}
+
+.marker-reed2 {
+    left: 52.5%;
+    top: 23.5%;
+    flex-direction: row;
+    gap: 12px;
+}
+
+.marker-pir {
+    left: 38.5%;
+    top: 50%;
+    flex-direction: column;
+}
+
+.marker-dht {
+    left: 40.5%;
+    top: 76.5%;
+    flex-direction: column;
+}
+
+.marker-mesh {
+    left: 54.5%;
+    top: 72.5%;
+    flex-direction: column;
+}
+
+.marker-bubble {
+    width: clamp(44px, 4.8vw, 68px);
+    height: clamp(44px, 4.8vw, 68px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 600;
+    position: relative;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.marker-bubble-sm {
+    width: clamp(36px, 3.8vw, 52px);
+    height: clamp(36px, 3.8vw, 52px);
+}
+
+.marker-num {
+    font-size: clamp(1.25rem, 2vw, 2rem);
+    font-weight: 600;
+    line-height: 1;
+}
+
+.marker-gicon {
+    font-size: clamp(22px, 2.4vw, 32px);
+}
+
+.marker-bubble-sm .material-symbols-rounded {
+    font-size: clamp(18px, 1.9vw, 25px);
+}
+
+.status-safe .marker-bubble {
+    background: radial-gradient(circle at 35% 30%, #56d364, #2ea043);
+    box-shadow: 0 0 0 clamp(6px, 0.8vw, 11px) var(--green-glow),
+                0 6px 16px rgba(46, 160, 67, 0.35);
+}
+
+.status-alarm .marker-bubble {
+    background: radial-gradient(circle at 35% 30%, #ff6b6b, #d32f2f);
+    box-shadow: 0 0 0 clamp(8px, 1.1vw, 15px) var(--red-glow),
+                0 8px 24px rgba(211, 47, 47, 0.55);
+    animation: pulseAlarmMarker 0.9s infinite alternate ease-in-out;
+}
+
+.status-warn .marker-bubble {
+    background: radial-gradient(circle at 35% 30%, #ffbe3d, #f08c00);
+    box-shadow: 0 0 0 clamp(6px, 0.8vw, 11px) var(--orange-glow),
+                0 6px 16px rgba(240, 140, 0, 0.35);
+}
+
+.status-info .marker-bubble {
+    background: radial-gradient(circle at 35% 30%, #4dabf7, #1971c2);
+    box-shadow: 0 0 0 clamp(6px, 0.8vw, 11px) var(--blue-glow),
+                0 6px 16px rgba(25, 113, 194, 0.35);
+}
+
+@keyframes pulseAlarmMarker {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(229, 57, 53, 0.45), 0 0 20px rgba(229, 57, 53, 0.6);
+    }
+    100% {
+        transform: scale(1.14);
+        box-shadow: 0 0 0 16px rgba(229, 57, 53, 0.2), 0 0 32px rgba(229, 57, 53, 0.9);
+    }
+}
+
+.marker-label {
+    font-size: clamp(0.76rem, 1.2vw, 1.2rem);
+    font-weight: 500;
+    color: var(--navy-primary);
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.86);
+    padding: 2px 7px;
+    border-radius: 6px;
+}
+
+.marker-label-top { margin-bottom: 10px; }
+.marker-label-right { margin-bottom: 18px; }
+.marker-label-bottom { margin-top: 10px; }
+.marker-label-bottom-right {
+    margin-top: 8px;
+    margin-left: 55px;
+}
+
+/* ==========================================================================
+   RIGHT COLUMN: STATO, AMBIENTE, RETE LORA
+   ========================================================================== */
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(14px, 1.6vw, 22px);
+    justify-content: space-between;
+}
+
+/* Pill ON-LINE */
+.online-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 13px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.online-pill.online {
+    background: var(--green-pill-bg);
+    color: var(--green-pill-text);
+}
+
+.online-pill.offline {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.online-pill.alarm {
+    background: var(--red-pill-bg);
+    color: var(--red-pill-text);
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Card 1: STATO */
+.status-card.alarm-border {
+    border-color: var(--red-alarm);
+    box-shadow: 0 12px 32px rgba(229, 57, 53, 0.16);
+}
+
+.status-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 2vw, 28px);
+    padding: 10px 4px 16px 4px;
+}
+
+.shield-wrapper {
+    width: clamp(58px, 5.5vw, 82px);
+    height: clamp(66px, 6.2vw, 92px);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.shield-icon {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 6px 14px rgba(67, 181, 84, 0.28));
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.shield-alarm .shield-icon {
+    filter: drop-shadow(0 6px 18px rgba(229, 57, 53, 0.48));
+    animation: pulseShield 0.85s infinite alternate ease-in-out;
+}
+
+@keyframes pulseShield {
+    from { transform: scale(1); }
+    to { transform: scale(1.09); }
+}
+
+.status-text-block {
+    display: flex;
+    flex-direction: column;
+}
+
+.status-big-text {
+    font-size: clamp(2rem, 3.1vw, 3.2rem);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    color: var(--navy-primary);
+    line-height: 1.05;
+}
+
+.status-sub-text {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--red-alarm);
+    margin-top: 5px;
+}
+
+/* Pulsanti Comandi con Google Material Symbols */
+.command-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #edf2f7;
+}
+
+.cmd-btn {
+    appearance: none;
+    border: 1px solid #dce6ee;
+    background: #f8fbfd;
+    color: var(--navy-primary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.18s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cmd-gicon {
+    font-size: 19px;
+}
+
+.cmd-btn:hover {
+    background: #eef5f9;
+    transform: translateY(-1px);
+}
+
+.cmd-btn:active {
+    transform: translateY(0);
+}
+
+.cmd-arm.active-state {
+    background: #e6f7eb;
+    border-color: #7cd492;
+    color: #166534;
+}
+
+.cmd-disarm.active-state {
+    background: #e8f1fe;
+    border-color: #93c5fd;
+    color: #1e40af;
+}
+
+/* Card 2: AMBIENTE */
+.env-metrics {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 16px;
+    padding: 12px 0 8px 0;
+}
+
+.env-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.env-gicon {
+    font-size: clamp(34px, 3.3vw, 46px);
+    color: var(--navy-primary);
+}
+
+.env-value-group {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.env-number {
+    font-size: clamp(2.1rem, 3.3vw, 3.4rem);
+    font-weight: 500;
+    color: var(--navy-primary);
+    line-height: 1;
+}
+
+.env-unit {
+    font-size: clamp(1.2rem, 1.8vw, 1.8rem);
+    font-weight: 500;
+    color: var(--navy-primary);
+}
+
+/* Card 3: RETE LORA + Solo iconcina Batteria con percentuale */
+.battery-pill {
+    background: #f0f6fa;
+    color: var(--navy-primary);
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bat-gicon {
+    font-size: 20px;
+    color: var(--green-safe);
+}
+
+.lora-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(16px, 2vw, 26px);
+    padding: 12px 0 8px 0;
+}
+
+.lora-icon {
+    width: clamp(54px, 5vw, 74px);
+    height: auto;
+    flex-shrink: 0;
+}
+
+.lora-status-text {
+    font-size: clamp(1.65rem, 2.5vw, 2.5rem);
+    font-weight: 500;
+    color: var(--navy-primary);
+    letter-spacing: 0.01em;
+    line-height: 1.1;
+}
+
+/* ==========================================================================
+   SEZIONE STORICO: GRAFICO & TABELLA EVENTI
+   ========================================================================== */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(16px, 2vw, 26px);
+}
+
+.chart-controls {
+    display: inline-flex;
+    background: #eef4f8;
+    padding: 3px;
+    border-radius: 10px;
+    gap: 2px;
+}
+
+.range-btn {
+    border: none;
+    background: transparent;
+    color: var(--navy-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.range-btn.active {
+    background: #ffffff;
+    color: var(--navy-primary);
+    box-shadow: 0 1px 4px rgba(11, 46, 70, 0.1);
+}
+
+.chart-legend-row {
+    display: flex;
+    gap: 18px;
+    margin-bottom: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--navy-secondary);
+}
+
+.chart-series-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.series-dot {
+    width: 12px;
+    height: 4px;
+    border-radius: 2px;
+    display: inline-block;
+}
+.temp-dot { background: var(--orange-warn); }
+.hum-dot { background: var(--blue-lora); }
+
+.canvas-container {
+    width: 100%;
+    height: 250px;
+    position: relative;
+}
+
+#telemetry-chart {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.table-scroll {
+    width: 100%;
+    max-height: 275px;
+    overflow-y: auto;
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid #edf2f7;
+}
+
+.events-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    text-align: left;
+}
+
+.events-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f5f9fc;
+    color: var(--navy-secondary);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e2ecf3;
+    z-index: 2;
+}
+
+.events-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: var(--navy-primary);
+    white-space: nowrap;
+}
+
+.events-table tbody tr:hover {
+    background: #f8fbfd;
+}
+
+.events-table tbody tr.row-alarm {
+    background: #fff5f5;
+}
+
+.cell-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.cell-with-icon .material-symbols-rounded {
+    font-size: 16px;
+    color: var(--navy-secondary);
+}
+
+.row-alarm .cell-with-icon .material-symbols-rounded {
+    color: var(--red-alarm);
+}
+
+.badge-type {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.badge-alm { background: #fee2e2; color: #b91c1c; }
+.badge-tel { background: #e0f2fe; color: #0369a1; }
+.badge-ack { background: #dcfce7; color: #15803d; }
+.badge-cfg { background: #f3e8ff; color: #6b21a8; }
+
+.empty-row {
+    text-align: center;
+    color: var(--navy-muted);
+    padding: 28px !important;
+}
+
+/* ==========================================================================
+   TOAST NOTIFICATION
+   ========================================================================== */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.toast {
+    background: var(--navy-primary);
+    color: #ffffff;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(11, 46, 70, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideInToast 0.25s ease forwards;
+}
+
+.toast .material-symbols-rounded {
+    font-size: 20px;
+}
+
+@keyframes slideInToast {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS: SMART TV, TABLET, MOBILE
+   ========================================================================== */
+
+@media (min-width: 1650px) {
+    .dashboard-wrapper {
+        max-width: 1860px;
+        padding: 36px 48px;
+    }
+    .boat-stage {
+        max-height: 620px;
+    }
+    .canvas-container {
+        height: 310px;
+    }
+    .table-scroll {
+        max-height: 325px;
+    }
+    .events-table {
+        font-size: 0.92rem;
+    }
+}
+
+@media (max-width: 1080px) {
+    .main-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .right-column {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+        min-width: 0;
+        width: 100%;
+    }
+
+    .analytics-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .dashboard-wrapper {
+        padding: 12px 10px 28px 10px;
+        gap: 12px;
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    .dashboard-header {
+        gap: 10px;
+    }
+
+    .brand-title {
+        gap: 8px;
+    }
+
+    .brand-main {
+        font-size: 1.7rem;
+    }
+
+    .brand-sub {
+        font-size: 0.95rem;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .unige-text {
+        font-size: 0.82rem;
+    }
+
+    .unige-crest {
+        width: 28px;
+    }
+
+    .card {
+        padding: 14px 12px;
+        border-radius: 18px;
+        min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .right-column {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    /* BARCA IN VERTICALE SUL TELEFONO (Prua rivolta verso l'alto) */
+    .boat-stage-container {
+        padding: 4px 0;
+    }
+
+    .boat-stage {
+        aspect-ratio: 540 / 1100;
+        width: 100%;
+        max-width: 295px;
+        max-height: none;
+        margin: 0 auto;
+    }
+
+    /* Coordinate esatte dei marker ruotati in verticale: (left = old_top, top = 100% - old_left) */
+    .marker-reed1 {
+        left: 22%;
+        top: 74.5%;
+        flex-direction: column;
+    }
+
+    .marker-reed2 {
+        left: 21%;
+        top: 44%;
+        flex-direction: column-reverse;
+        gap: 4px;
+    }
+
+    .marker-pir {
+        left: 50%;
+        top: 61.5%;
+        flex-direction: column;
+    }
+
+    .marker-dht {
+        left: 78%;
+        top: 62%;
+        flex-direction: column;
+    }
+
+    .marker-mesh {
+        left: 76%;
+        top: 43%;
+        flex-direction: column;
+    }
+
+    .marker-bubble {
+        width: 38px;
+        height: 38px;
+    }
+    .marker-bubble-sm {
+        width: 32px;
+        height: 32px;
+    }
+    .marker-gicon {
+        font-size: 20px;
+    }
+    .marker-bubble-sm .material-symbols-rounded {
+        font-size: 18px;
+    }
+    .marker-num {
+        font-size: 1.1rem;
+    }
+    .marker-label {
+        font-size: 0.68rem;
+        padding: 2px 6px;
+        margin: 0 !important;
+    }
+    .marker-label-top { margin-bottom: 5px !important; }
+    .marker-label-bottom,
+    .marker-label-right,
+    .marker-label-bottom-right { margin-top: 5px !important; }
+
+    .status-main {
+        justify-content: flex-start;
+        gap: 16px;
+        padding: 6px 2px 12px 2px;
+    }
+
+    .status-big-text {
+        font-size: 1.85rem;
+    }
+
+    .cmd-btn {
+        min-height: 46px;
+        font-size: 0.84rem;
+        padding: 6px 6px;
+        border-radius: 12px;
+    }
+
+    .env-metrics {
+        justify-content: space-around;
+        padding: 8px 4px;
+    }
+
+    .env-number {
+        font-size: 2rem;
+    }
+
+    .lora-main {
+        justify-content: flex-start;
+        gap: 16px;
+    }
+
+    .lora-status-text {
+        font-size: 1.55rem;
+    }
+
+    /* Contenimento rigoroso Grafico e Tabella su Mobile */
+    .chart-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .canvas-container {
+        width: 100%;
+        max-width: 100%;
+        height: 195px;
+        overflow: hidden;
+    }
+
+    .table-scroll {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .events-table {
+        font-size: 0.74rem;
+    }
+
+    .events-table thead th,
+    .events-table tbody td {
+        padding: 7px 6px;
+    }
+
+    #toast-container {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+    }
+
+    .toast {
+        justify-content: center;
+    }
+}

@@ -401,7 +401,7 @@
         "type": "function",
         "z": "tab_meshboatguard",
         "name": "Format InfluxDB Line Protocol",
-        "func": "let p = msg.payload;\nif (!p || !p.dev) return null;\n\nlet measurement = \"meshboatguard_telemetry\";\nlet line = `${measurement},device=${p.dev},source=${p.src||'UNK'},msg_type=${p.t||'TEL'} `;\n\nlet fields = [];\nif (p.tmp !== undefined) fields.push(`temperature=${parseFloat(p.tmp)}`);\nif (p.hum !== undefined) fields.push(`humidity=${parseFloat(p.hum)}`);\nif (p.bat !== undefined) fields.push(`battery=${parseInt(p.bat)}`);\nif (p.s !== undefined) fields.push(`armed=${p.s === 'ARM' ? 1 : 0}`);\nfields.push(`alarm_active=${p.t === 'ALM' ? 1 : 0}`);\n\nline += fields.join(\",\");\n\nmsg.payload = line;\nmsg.headers = {\n    \"Authorization\": \"Token meshboatguard_secret_token_12345\",\n    \"Content-Type\": \"text/plain; charset=utf-8\"\n};\nreturn msg;",
+        "func": "let p = msg.payload;\nif (!p || !p.dev) return null;\n\nflow.set(\"last_telemetry\", {\n    dev: p.dev || \"BoatGuard_01\",\n    tmp: p.tmp !== undefined ? parseFloat(p.tmp) : 22.0,\n    hum: p.hum !== undefined ? parseFloat(p.hum) : 54.0,\n    bat: p.bat !== undefined ? parseInt(p.bat) : 98,\n    s: p.s || \"ARM\"\n});\n\nlet measurement = \"meshboatguard_telemetry\";\nlet line = `${measurement},device=${p.dev},source=${p.src||'UNK'},msg_type=${p.t||'TEL'} `;\n\nlet fields = [];\nif (p.tmp !== undefined) fields.push(`temperature=${parseFloat(p.tmp)}`);\nif (p.hum !== undefined) fields.push(`humidity=${parseFloat(p.hum)}`);\nif (p.bat !== undefined) fields.push(`battery=${parseInt(p.bat)}`);\nif (p.s !== undefined) fields.push(`armed=${p.s === 'ARM' ? 1 : 0}`);\nfields.push(`alarm_active=${p.t === 'ALM' ? 1 : 0}`);\n\nline += fields.join(\",\");\n\nmsg.payload = line;\nmsg.headers = {\n    \"Authorization\": \"Token meshboatguard_secret_token_12345\",\n    \"Content-Type\": \"text/plain; charset=utf-8\"\n};\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -530,6 +530,74 @@
         "statusType": "auto",
         "x": 190,
         "y": 60,
+        "wires": []
+    },
+    {
+        "id": "comment_web_api",
+        "type": "comment",
+        "z": "tab_meshboatguard",
+        "name": "4. WEB DASHBOARD COMMAND API (HTTP POST /api/command)",
+        "info": "",
+        "x": 270,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "node_http_cmd_in",
+        "type": "http in",
+        "z": "tab_meshboatguard",
+        "name": "Web Dashboard Command API",
+        "url": "/api/command",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 700,
+        "wires": [
+            [
+                "node_dashboard_cmd_router"
+            ]
+        ]
+    },
+    {
+        "id": "node_dashboard_cmd_router",
+        "type": "function",
+        "z": "tab_meshboatguard",
+        "name": "Route Web Dashboard Commands",
+        "func": "let body = msg.payload || {};\nlet action = (body.action || \"\").toLowerCase();\nlet last = flow.get(\"last_telemetry\") || { dev: \"BoatGuard_01\", tmp: 22.0, hum: 54.0, bat: 98, s: \"ARM\" };\n\nlet httpOut = null;\nlet mqttDownlink = null;\nlet influxUpdate = null;\n\nif (action === \"arm\") {\n    mqttDownlink = { payload: '{\"cmd\":\"ARM\",\"val\":1}' };\n    influxUpdate = {\n        payload: {\n            t: \"ACK\",\n            dev: last.dev,\n            s: \"ARM\",\n            src: \"WEB\",\n            tmp: last.tmp,\n            hum: last.hum,\n            bat: last.bat\n        }\n    };\n    httpOut = { res: msg.res, payload: { ok: true, action: \"arm\", message: \"Comando ARMA inviato via LoRa\" } };\n} else if (action === \"disarm\") {\n    mqttDownlink = { payload: '{\"cmd\":\"ARM\",\"val\":0}' };\n    influxUpdate = {\n        payload: {\n            t: \"ACK\",\n            dev: last.dev,\n            s: \"DIS\",\n            src: \"WEB\",\n            tmp: last.tmp,\n            hum: last.hum,\n            bat: last.bat\n        }\n    };\n    httpOut = { res: msg.res, payload: { ok: true, action: \"disarm\", message: \"Comando DISARMA inviato via LoRa\" } };\n} else if (action === \"status\") {\n    mqttDownlink = { payload: '{\"cmd\":\"STAT\"}' };\n    httpOut = { res: msg.res, payload: { ok: true, action: \"status\", message: \"Richiesta STATO inviata alla barca via LoRa\" } };\n} else if (action === \"simulate\") {\n    let simType = body.type || \"ALM\";\n    let simSrc = body.src || \"PRUA\";\n    let simArmed = body.s || (simType === \"ALM\" ? \"ARM\" : last.s);\n    let simTmp = body.tmp !== undefined ? parseFloat(body.tmp) : last.tmp;\n    let simHum = body.hum !== undefined ? parseFloat(body.hum) : last.hum;\n    let simBat = body.bat !== undefined ? parseInt(body.bat) : last.bat;\n    influxUpdate = {\n        payload: JSON.stringify({\n            t: simType,\n            dev: last.dev,\n            s: simArmed,\n            src: simSrc,\n            tmp: simTmp,\n            hum: simHum,\n            bat: simBat\n        })\n    };\n    httpOut = { res: msg.res, payload: { ok: true, action: \"simulate\", message: `Simulato evento ${simType} (${simSrc})` } };\n    return [httpOut, null, null, influxUpdate];\n} else {\n    httpOut = { res: msg.res, statusCode: 400, payload: { ok: false, error: \"Azione non valida\" } };\n}\n\nreturn [httpOut, mqttDownlink, influxUpdate, null];",
+        "outputs": 4,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 700,
+        "wires": [
+            [
+                "node_http_cmd_res"
+            ],
+            [
+                "node_format_mqtt_downlink"
+            ],
+            [
+                "node_format_influx"
+            ],
+            [
+                "node_json_parse"
+            ]
+        ]
+    },
+    {
+        "id": "node_http_cmd_res",
+        "type": "http response",
+        "z": "tab_meshboatguard",
+        "name": "HTTP JSON Response",
+        "statusCode": "200",
+        "headers": {
+            "content-type": "application/json"
+        },
+        "x": 820,
+        "y": 680,
         "wires": []
     }
 ]

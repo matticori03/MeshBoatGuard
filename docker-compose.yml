@@ -83,3 +83,19 @@ services:
       - ./server/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - influxdb
+
+  # ---------------------------------------------------------------------------
+  # 4. WEB DASHBOARD: Custom responsive UI (Desktop, TV, Mobile) on LAN
+  # ---------------------------------------------------------------------------
+  dashboard:
+    image: nginx:alpine
+    container_name: meshboatguard_dashboard
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8090:80"
+    volumes:
+      - ./server/dashboard/public:/usr/share/nginx/html:ro
+      - ./server/dashboard/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - influxdb
+      - nodered

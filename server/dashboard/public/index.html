@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#eaf1f5">
+    <title>MeshBoat DASHBOARD – Università di Genova</title>
+    <!-- Google Material Symbols Rounded -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..600,0..1,0" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Banner Notifica / Toast -->
+    <div id="toast-container" aria-live="polite"></div>
+
+    <div class="dashboard-wrapper">
+        <!-- HEADER (MeshBoat DASHBOARD + Selettore Lingua + Debug Toggle + Università di Genova) -->
+        <header class="dashboard-header">
+            <h1 class="brand-title">
+                <span class="brand-main">MeshBoat</span>
+                <span class="brand-sub" data-i18n="dashboard_sub">DASHBOARD</span>
+            </h1>
+
+            <div class="header-right">
+                <!-- Toggle Debug Card -->
+                <button type="button" class="icon-pill-btn" id="debug-toggle-btn" onclick="toggleDebugCard()" title="Debug">
+                    <span class="material-symbols-rounded">terminal</span>
+                    <span>Debug</span>
+                </button>
+
+                <!-- Language Switcher (IT / EN) -->
+                <div class="lang-switch" role="group" aria-label="Language switcher">
+                    <button type="button" class="lang-btn active" id="lang-it" onclick="setLanguage('it')">IT</button>
+                    <button type="button" class="lang-btn" id="lang-en" onclick="setLanguage('en')">EN</button>
+                </div>
+
+                <!-- Stemma Università di Genova (Sempre in Italiano) -->
+                <div class="unige-logo" aria-label="Università di Genova">
+                    <svg class="unige-crest" viewBox="0 0 64 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 6H60V38C60 56 32 70 32 70C32 70 4 56 4 38V6Z" stroke="#0b2e46" stroke-width="4" fill="#ffffff"/>
+                        <path d="M4 22H60" stroke="#0b2e46" stroke-width="3.5"/>
+                        <path d="M32 6V22" stroke="#0b2e46" stroke-width="5"/>
+                        <path d="M4 14H60" stroke="#0b2e46" stroke-width="4"/>
+                        <circle cx="32" cy="44" r="14" fill="#0b2e46"/>
+                        <circle cx="32" cy="39" r="3.2" fill="#ffffff"/>
+                        <path d="M25 52C25 46 39 46 39 52" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M32 43V53M23 45L32 41L41 45" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div class="unige-text">
+                        <span>Università</span>
+                        <span>di Genova</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CARD DEBUG NASCOSTA (Mostra l'ultimo messaggio raw arrivato + Test rapidi) -->
+        <section class="card debug-card hidden" id="debug-card" aria-label="Debug Panel">
+            <div class="debug-header">
+                <div class="debug-title-wrap">
+                    <span class="material-symbols-rounded debug-icon">bug_report</span>
+                    <span class="debug-title" data-i18n="debug_title">ULTIMO MESSAGGIO RICEVUTO (RAW PAYLOAD)</span>
+                </div>
+                <span class="debug-timestamp" id="debug-timestamp">--:--:--</span>
+            </div>
+
+            <pre class="debug-json" id="debug-raw-json">{"status": "waiting_for_data"}</pre>
+        </section>
+
+        <!-- GRIGLIA PRINCIPALE (Fedele al Mockup) -->
+        <main class="main-grid">
+            <!-- COLONNA SINISTRA: PIANTINA PULITA DELL'IMBARCAZIONE -->
+            <section class="card boat-card" aria-label="Piantina Sensori Imbarcazione">
+                <div class="boat-stage-container">
+                    <div class="boat-stage" id="boat-stage">
+                        <svg class="boat-blueprint" id="boat-svg" viewBox="0 0 1100 540" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Boat Blueprint">
+                            <g id="boat-blueprint-group">
+                            <!-- Ombra morbida scafo -->
+                            <path d="M95 160 C95 110, 220 75, 430 72 C670 69, 895 130, 1055 270 C895 410, 670 471, 430 468 C220 465, 95 430, 95 380 C82 325, 82 215, 95 160 Z" fill="#f7fafc" />
+
+                            <!-- Zona Evidenziazione Allarme CABINA -->
+                            <path id="zone-highlight-cabina" class="zone-highlight" d="M180 110 C300 95, 450 92, 560 100 L560 440 C450 448, 300 445, 180 430 Z" fill="rgba(229, 57, 53, 0)" />
+                            <!-- Zona Evidenziazione Allarme PRUA -->
+                            <path id="zone-highlight-prua" class="zone-highlight" d="M560 100 C730 112, 890 165, 1020 270 C890 375, 730 428, 560 440 Z" fill="rgba(229, 57, 53, 0)" />
+
+                            <!-- SCAFO ESTERNO -->
+                            <path d="M95 155 C102 105, 230 72, 435 68 C675 64, 895 128, 1058 270 C895 412, 675 476, 435 472 C230 468, 102 435, 95 385 C80 325, 80 215, 95 155 Z" stroke="#374957" stroke-width="3" fill="#ffffff"/>
+                            <path d="M106 162 C113 116, 236 84, 435 80 C668 76, 880 137, 1034 270 C880 403, 668 464, 435 460 C236 456, 113 424, 106 378 C93 320, 93 220, 106 162 Z" stroke="#374957" stroke-width="2"/>
+                            <path d="M118 170 C125 128, 244 96, 435 92 C660 88, 862 146, 1008 270 C862 394, 660 452, 435 448 C244 444, 125 412, 118 370 C107 315, 107 225, 118 170 Z" stroke="#5b7080" stroke-width="1.4"/>
+
+                            <path d="M135 126 C265 96, 460 92, 650 105" stroke="#5b7080" stroke-width="1.2" stroke-dasharray="10 6"/>
+                            <path d="M135 414 C265 444, 460 448, 650 435" stroke="#5b7080" stroke-width="1.2" stroke-dasharray="10 6"/>
+
+                            <!-- SPECCHIO DI POPPA & PLANCETTA -->
+                            <path d="M118 170 L148 176 L148 364 L118 370" stroke="#374957" stroke-width="1.8"/>
+                            <rect x="122" y="236" width="24" height="68" rx="3" stroke="#5b7080" stroke-width="1.4"/>
+                            <line x1="122" y1="253" x2="146" y2="253" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="122" y1="270" x2="146" y2="270" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="122" y1="287" x2="146" y2="287" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <!-- POZZETTO & TIMONERIA -->
+                            <path d="M150 156 L332 146 L355 186 L355 354 L332 394 L150 384 Z" stroke="#374957" stroke-width="1.8" fill="#fbfdfe"/>
+                            <ellipse cx="182" cy="196" rx="7" ry="30" stroke="#374957" stroke-width="2.2" fill="#ffffff"/>
+                            <line x1="175" y1="196" x2="189" y2="196" stroke="#374957" stroke-width="1.8"/>
+                            <ellipse cx="182" cy="344" rx="7" ry="30" stroke="#374957" stroke-width="2.2" fill="#ffffff"/>
+                            <line x1="175" y1="344" x2="189" y2="344" stroke="#374957" stroke-width="1.8"/>
+                            <path d="M189 196 L204 190 L204 202 Z" stroke="#374957" stroke-width="1.5"/>
+                            <path d="M189 344 L204 338 L204 350 Z" stroke="#374957" stroke-width="1.5"/>
+
+                            <rect x="212" y="160" width="112" height="44" rx="6" stroke="#374957" stroke-width="1.6" fill="#ffffff"/>
+                            <line x1="250" y1="160" x2="250" y2="204" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="288" y1="160" x2="288" y2="204" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <rect x="212" y="336" width="112" height="44" rx="6" stroke="#374957" stroke-width="1.6" fill="#ffffff"/>
+                            <line x1="250" y1="336" x2="250" y2="380" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="288" y1="336" x2="288" y2="380" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <path d="M234 252 L298 245 L298 295 L234 288 Z" stroke="#374957" stroke-width="1.8" fill="#ffffff"/>
+                            <rect x="242" y="258" width="48" height="24" rx="3" stroke="#5b7080" stroke-width="1.3"/>
+                            <circle cx="212" cy="270" r="4" stroke="#374957" stroke-width="1.5"/>
+
+                            <rect x="364" y="198" width="26" height="22" rx="3" stroke="#5b7080" stroke-width="1.3"/>
+                            <rect x="364" y="320" width="26" height="22" rx="3" stroke="#5b7080" stroke-width="1.3"/>
+                            <circle cx="348" cy="222" r="7" stroke="#374957" stroke-width="1.6"/>
+                            <circle cx="348" cy="222" r="3" fill="#374957"/>
+                            <circle cx="348" cy="318" r="7" stroke="#374957" stroke-width="1.6"/>
+                            <circle cx="348" cy="318" r="3" fill="#374957"/>
+
+                            <!-- TUGA E QUADRATO CENTRALE -->
+                            <path d="M335 128 C445 104, 620 104, 745 148 L745 392 C620 436, 445 436, 335 412 Z" stroke="#374957" stroke-width="2" fill="#ffffff"/>
+                            <line x1="418" y1="116" x2="418" y2="424" stroke="#374957" stroke-width="1.8"/>
+                            <line x1="652" y1="126" x2="652" y2="414" stroke="#374957" stroke-width="2"/>
+
+                            <rect x="356" y="246" width="52" height="48" rx="4" stroke="#374957" stroke-width="1.6" fill="#f8fafc"/>
+                            <line x1="369" y1="246" x2="369" y2="294" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="382" y1="246" x2="382" y2="294" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="395" y1="246" x2="395" y2="294" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <path d="M418 164 L495 164 L495 224 L418 224" stroke="#374957" stroke-width="1.5"/>
+                            <path d="M428 172 L475 172 L442 216 Z" stroke="#5b7080" stroke-width="1.2"/>
+                            <rect x="424" y="314" width="76" height="86" rx="4" stroke="#374957" stroke-width="1.5"/>
+                            <rect x="434" y="324" width="26" height="28" rx="3" stroke="#5b7080" stroke-width="1.2"/>
+                            <rect x="466" y="324" width="26" height="28" rx="3" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <rect x="518" y="132" width="122" height="46" rx="6" stroke="#374957" stroke-width="1.6" fill="#fbfdfe"/>
+                            <line x1="558" y1="132" x2="558" y2="178" stroke="#5b7080" stroke-width="1.2"/>
+                            <line x1="598" y1="132" x2="598" y2="178" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <rect x="518" y="202" width="98" height="52" rx="5" stroke="#374957" stroke-width="1.7" fill="#ffffff"/>
+                            <rect x="530" y="210" width="74" height="36" rx="3" stroke="#5b7080" stroke-width="1.1"/>
+
+                            <path d="M512 310 L638 310 L638 395 L512 395 Z" stroke="#374957" stroke-width="1.6" fill="#fbfdfe"/>
+                            <rect x="524" y="322" width="66" height="58" rx="5" stroke="#5b7080" stroke-width="1.3" fill="#ffffff"/>
+                            <line x1="598" y1="310" x2="598" y2="395" stroke="#5b7080" stroke-width="1.3"/>
+
+                            <!-- CABINA DI PRUA -->
+                            <path d="M652 142 L748 164 L748 376 L652 398 Z" stroke="#374957" stroke-width="1.6"/>
+                            <rect x="676" y="175" width="28" height="28" rx="6" stroke="#374957" stroke-width="1.6" fill="#ffffff"/>
+                            <rect x="676" y="337" width="28" height="28" rx="6" stroke="#374957" stroke-width="1.6" fill="#ffffff"/>
+
+                            <rect x="720" y="232" width="72" height="76" rx="8" stroke="#374957" stroke-width="2" fill="#ffffff"/>
+                            <rect x="730" y="242" width="52" height="56" rx="5" stroke="#5b7080" stroke-width="1.4" fill="#f8fafc"/>
+
+                            <rect x="858" y="238" width="54" height="64" rx="6" stroke="#374957" stroke-width="1.8" fill="#ffffff"/>
+                            <rect x="863" y="246" width="12" height="16" rx="2" stroke="#5b7080" stroke-width="1.2"/>
+                            <rect x="863" y="278" width="12" height="16" rx="2" stroke="#5b7080" stroke-width="1.2"/>
+
+                            <path d="M975 225 L975 315" stroke="#374957" stroke-width="1.6"/>
+                            <path d="M975 270 L1056 270" stroke="#374957" stroke-width="2.2"/>
+                            <circle cx="1015" cy="270" r="4" fill="#374957"/>
+
+                            <!-- ALBERO E BOMA CENTRALE -->
+                            <rect x="275" y="263" width="368" height="14" rx="6" stroke="#374957" stroke-width="2" fill="#ffffff"/>
+                            <line x1="286" y1="270" x2="628" y2="270" stroke="#5b7080" stroke-width="1.4"/>
+                            <circle cx="635" cy="270" r="11" stroke="#374957" stroke-width="2.2" fill="#ffffff"/>
+                            <circle cx="635" cy="270" r="5" fill="#374957"/>
+                            </g>
+                        </svg>
+
+                        <!-- MARKER 1: SENSORE REED 1 (CABINA) -->
+                        <div class="sensor-marker marker-reed1 status-safe" id="marker-reed1" data-sensor="CABINA">
+                            <span class="marker-label marker-label-top" data-i18n="sensor_reed1">Sensore Reed 1</span>
+                            <div class="marker-bubble">
+                                <span class="marker-num">1</span>
+                            </div>
+                        </div>
+
+                        <!-- MARKER 2: SENSORE REED 2 (PRUA) -->
+                        <div class="sensor-marker marker-reed2 status-safe" id="marker-reed2" data-sensor="PRUA">
+                            <div class="marker-bubble">
+                                <span class="marker-num">2</span>
+                            </div>
+                            <span class="marker-label marker-label-right" data-i18n="sensor_reed2">Sensore Reed 2</span>
+                        </div>
+
+                        <!-- MARKER 3: SENSORE PIR -->
+                        <div class="sensor-marker marker-pir status-safe" id="marker-pir" data-sensor="PIR">
+                            <div class="marker-bubble marker-bubble-sm">
+                                <span class="material-symbols-rounded">motion_sensor_active</span>
+                            </div>
+                            <span class="marker-label marker-label-bottom" data-i18n="sensor_pir">Sensore PIR</span>
+                        </div>
+
+                        <!-- MARKER 4: SENSORE DHT11 -->
+                        <div class="sensor-marker marker-dht status-warn" id="marker-dht">
+                            <div class="marker-bubble">
+                                <span class="material-symbols-rounded marker-gicon">device_thermostat</span>
+                            </div>
+                            <span class="marker-label marker-label-bottom" data-i18n="sensor_dht">Sensore DHT11</span>
+                        </div>
+
+                        <!-- MARKER 5: NODO MESHTASTIC -->
+                        <div class="sensor-marker marker-mesh status-info" id="marker-mesh">
+                            <div class="marker-bubble">
+                                <span class="material-symbols-rounded marker-gicon">podcasts</span>
+                            </div>
+                            <span class="marker-label marker-label-bottom-right" data-i18n="sensor_mesh">Nodo Meshtastic</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLONNA DESTRA: 3 CARD ESSENZIALI FEDELI AL MOCKUP -->
+            <aside class="right-column">
+                <!-- CARD 1: STATO + COMANDI -->
+                <section class="card status-card" id="status-card" aria-label="Stato Sistema">
+                    <div class="card-header">
+                        <h2 class="card-title" data-i18n="card_status">STATO</h2>
+                        <span class="online-pill online" id="online-pill">
+                            <span class="online-dot"></span>
+                            <span id="online-text">ON-LINE</span>
+                        </span>
+                    </div>
+
+                    <div class="status-main">
+                        <div class="shield-wrapper" id="shield-wrapper">
+                            <svg class="shield-icon" viewBox="0 0 64 74" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path id="shield-path" d="M32 4L8 13V34.5C8 51.8 18.2 66.8 32 71C45.8 66.8 56 51.8 56 34.5V13L32 4Z" fill="#43b554"/>
+                            </svg>
+                        </div>
+                        <div class="status-text-block">
+                            <div class="status-big-text" id="status-main-text">SICURO</div>
+                            <div class="status-sub-text hidden" id="status-sub-text"></div>
+                        </div>
+                    </div>
+
+                    <!-- Pulsanti Interattivi con Google Material Icons -->
+                    <div class="command-actions" role="group">
+                        <button type="button" class="cmd-btn cmd-arm" id="btn-arm" onclick="sendBoatCommand('arm')">
+                            <span class="material-symbols-rounded cmd-gicon">lock</span>
+                            <span data-i18n="btn_arm">Arma</span>
+                        </button>
+                        <button type="button" class="cmd-btn cmd-disarm" id="btn-disarm" onclick="sendBoatCommand('disarm')">
+                            <span class="material-symbols-rounded cmd-gicon">lock_open</span>
+                            <span data-i18n="btn_disarm">Disarma</span>
+                        </button>
+                        <button type="button" class="cmd-btn cmd-status" id="btn-status" onclick="sendBoatCommand('status')">
+                            <span class="material-symbols-rounded cmd-gicon">sync</span>
+                            <span data-i18n="btn_status">Stato</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- CARD 2: AMBIENTE -->
+                <section class="card env-card" aria-label="Ambiente">
+                    <div class="card-header">
+                        <h2 class="card-title" data-i18n="card_env">AMBIENTE</h2>
+                    </div>
+
+                    <div class="env-metrics">
+                        <div class="env-item">
+                            <span class="material-symbols-rounded env-gicon">device_thermostat</span>
+                            <div class="env-value-group">
+                                <span class="env-number" id="temp-value">22</span>
+                                <span class="env-unit">°C</span>
+                            </div>
+                        </div>
+
+                        <div class="env-item">
+                            <span class="material-symbols-rounded env-gicon">humidity_percentage</span>
+                            <div class="env-value-group">
+                                <span class="env-number" id="hum-value">54</span>
+                                <span class="env-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CARD 3: RETE LORA (Solo iconcina batteria + percentuale, senza barra) -->
+                <section class="card lora-card" aria-label="Rete LoRa">
+                    <div class="card-header">
+                        <h2 class="card-title" data-i18n="card_lora">RETE LoRa</h2>
+                        <span class="battery-pill" id="battery-pill">
+                            <span class="material-symbols-rounded bat-gicon" id="bat-icon">battery_full</span>
+                            <strong id="bat-value">98</strong>%
+                        </span>
+                    </div>
+
+                    <div class="lora-main">
+                        <svg class="lora-icon" id="lora-icon" viewBox="0 0 64 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="32" cy="43" r="4.5" fill="#4ea8de"/>
+                            <path d="M20.5 33.5C23.8 30.2 27.7 28.5 32 28.5C36.3 28.5 40.2 30.2 43.5 33.5" stroke="#4ea8de" stroke-width="5" stroke-linecap="round"/>
+                            <path d="M12 24.5C17.8 18.8 24.5 16 32 16C39.5 16 46.2 18.8 52 24.5" stroke="#4ea8de" stroke-width="5" stroke-linecap="round"/>
+                            <path d="M4 15.5C12.2 7.5 21.5 3.5 32 3.5C42.5 3.5 51.8 7.5 60 15.5" stroke="#4ea8de" stroke-width="5" stroke-linecap="round"/>
+                        </svg>
+                        <div class="lora-text-group">
+                            <div class="lora-status-text" id="lora-status-text">CONNESSO</div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </main>
+
+        <!-- SEZIONE STORICO E LOG (Grafana Parity) -->
+        <section class="analytics-grid" aria-label="Storico e Log">
+            <!-- GRAFICO TELEMETRIA -->
+            <div class="card chart-card">
+                <div class="card-header chart-header">
+                    <h2 class="card-title" data-i18n="chart_title">TELEMETRIA AMBIENTALE</h2>
+                    <div class="chart-controls">
+                        <button type="button" class="range-btn" data-range="-1h" onclick="setChartRange('-1h', this)">1h</button>
+                        <button type="button" class="range-btn active" data-range="-6h" onclick="setChartRange('-6h', this)">6h</button>
+                        <button type="button" class="range-btn" data-range="-24h" onclick="setChartRange('-24h', this)">24h</button>
+                    </div>
+                </div>
+
+                <div class="chart-legend-row">
+                    <span class="chart-series-badge"><i class="series-dot temp-dot"></i> <span data-i18n="legend_temp">Temperatura (°C)</span></span>
+                    <span class="chart-series-badge"><i class="series-dot hum-dot"></i> <span data-i18n="legend_hum">Umidità (%)</span></span>
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="telemetry-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- TABELLA REGISTRO EVENTI -->
+            <div class="card log-card">
+                <div class="card-header log-header">
+                    <h2 class="card-title" data-i18n="log_title">REGISTRO EVENTI</h2>
+                </div>
+
+                <div class="table-scroll">
+                    <table class="events-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="th_time">Orario</th>
+                                <th data-i18n="th_type">Tipo</th>
+                                <th data-i18n="th_source">Sorgente</th>
+                                <th data-i18n="th_state">Stato</th>
+                                <th data-i18n="th_weather">Ambiente</th>
+                                <th data-i18n="th_bat">Bat.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="events-tbody">
+                            <tr>
+                                <td colspan="6" class="empty-row" data-i18n="loading_events">Caricamento eventi...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
